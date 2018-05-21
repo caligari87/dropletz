@@ -1,0 +1,88 @@
+version "3.3"
+
+class DZ_BloodDrop : Actor {
+	default {
+		radius 0.5;
+		height 1.0;
+		+MISSILE;
+		+NOTONAUTOMAP;
+		+FORCEXYBILLBOARD;
+		+NOTELEPORT;
+		+BLOODLESSIMPACT;
+		+FLOORCLIP;
+		+WINDTHRUST;
+		+NOBLOCKMAP;
+		+THRUACTORS;
+		+MOVEWITHSECTOR;
+	}
+
+	states {
+		spawn:
+			DBLD A 1;
+			loop;
+		death:
+			DBLD A 1 A_SpawnItemEx("DZ_FlatBloodSplat");
+			stop;
+	}
+
+	action void DZA_RandomScale() {
+		scale.x = int(random(1,2));
+		scale.y = scale.x;
+	}
+}
+
+class DZ_FlatBloodSplat : Actor {
+	default {
+		+THRUACTORS;
+		+FLATSPRITE;
+		+NOBLOCKMAP;
+		+MOVEWITHSECTOR;
+		+NOTELEPORT;
+	}
+
+	states {
+		spawn:
+			TNT1 A 0;
+			DBLD A -1 DZA_FixPosition();
+			stop;
+	}
+
+	action void DZA_FixPosition() {
+		scale.x = int(random(1,3));
+		scale.y = scale.x;
+		angle = 0;
+		SetOrigin((int(pos.x), int(pos.y), int(pos.z)), false);
+	}
+}
+
+class DZ_BloodSpurt : Actor replaces Blood {
+	int spraystrength;
+
+	default {
+	}
+
+	states {
+		spawn:
+			TNT1 A 0;
+			TNT1 AAAAAAAAAA 1 DZA_SprayBloodDrops();
+			stop;
+	}
+
+	action void DZA_SprayBloodDrops() {
+		A_SpawnItemEx("DZ_BloodDrop",
+			0, 0, 0,
+			frandom(invoker.spraystrength*0.1, invoker.spraystrength*0.5), frandom(-0.5, 0.5), frandom(-0.5, 0.5));
+		A_SpawnItemEx("DZ_BloodDrop",
+			0, 0, 0,
+			frandom(invoker.spraystrength*0.1, invoker.spraystrength*0.5), frandom(-0.25, 0.25), frandom(-0.25, 0.25));
+		A_SpawnItemEx("DZ_BloodDrop",
+			0, 0, 0,
+			frandom(invoker.spraystrength*0.1, invoker.spraystrength*0.5), frandom(-0.1, 0.1), frandom(-0.1, 0.1));
+		invoker.spraystrength++;
+		angle += frandom(1,3);
+		if(invoker.spraystrength>=10) {
+			invoker.spraystrength = 1;
+			angle += frandom(-30,30);
+		}
+	}
+}
