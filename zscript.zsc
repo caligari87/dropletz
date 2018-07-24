@@ -2,6 +2,7 @@ version "3.3"
 
 class DZ_BloodDrop : Actor {
 	int testscale;
+	double lastvel;
 
 	default {
 		radius 0.5;
@@ -20,10 +21,13 @@ class DZ_BloodDrop : Actor {
 
 	states {
 		spawn:
-			DBLD # 1 DZA_RandomScale();
+			DBLD # 1 {
+				DZA_RandomScale();
+				invoker.lastvel = vel.xy.length();
+			}
 			loop;
 		death:
-			DBLD # 1 A_SpawnItemEx("DZ_FlatBloodSplat");
+			DBLD # 1 DZA_SpawnSplat(); //A_SpawnItemEx("DZ_FlatBloodSplat");
 			stop;
 	}
 
@@ -31,6 +35,12 @@ class DZ_BloodDrop : Actor {
 		invoker.testscale = randompick(1,2);
 		if(invoker.testscale==1) { frame = 0; }
 		if(invoker.testscale==2) { frame = randompick(1,2); }
+	}
+
+	action void DZA_SpawnSplat() {
+		let spawned = DZ_FlatBloodSplat(actor.Spawn('DZ_FlatBloodSplat', invoker.pos));
+		spawned.angle = invoker.angle + 90;
+		spawned.scale.x *= (invoker.lastvel * 0.1);
 	}
 }
 
@@ -48,11 +58,12 @@ class DZ_FlatBloodSplat : Actor {
 	states {
 		spawn:
 			TNT1 A 0;
-			DBLD A -1 DZA_FixPosition();
+			TEST A -1; //DZA_FixPosition();
 			stop;
 	}
 
 	action void DZA_FixPosition() {
+		return;
 		invoker.testscale = randompick(1,2,3);
 		angle = randompick(0,1,2,3) * 90;
 		SetOrigin((int(pos.x), int(pos.y), int(pos.z)), false);
@@ -78,7 +89,7 @@ class DZ_BloodSpurt : Actor replaces Blood {
 	action void DZA_SprayBloodDrops() {
 		A_SpawnItemEx("DZ_BloodDrop",
 			0, 0, 0,
-			frandom(invoker.spraystrength*0.1, invoker.spraystrength*1), frandom(-1, 1), frandom(-1, 1));
+			frandom(invoker.spraystrength*0.9, invoker.spraystrength*1.1), frandom(-1, 1), frandom(-1, 1));
 		invoker.spraystrength++;
 		angle += frandom(1,3);
 		if(invoker.spraystrength>=10) {
